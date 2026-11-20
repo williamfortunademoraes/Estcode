@@ -19,6 +19,8 @@
 - Estoque: mínimo global persistido; só substitui o mínimo do produto quando o valor individual é zero.
 - NF-e: serviço Node separado, JWT e perfil admin validados, consulta por NSU com mTLS, persistência privada, conferência/mapeamento dos itens e RPC transacional para aplicar entrada.
 - Migrations `0008` a `0011` validadas em PostgreSQL 16 temporário; a RPC fiscal foi exercitada com CNPJ, aplicação, idempotência e leitura RLS.
+- Verificações locais da v2: TypeScript e ESLint aprovados; 26 suítes/83 testes; Expo Doctor 20/20; export web com 28 rotas.
+- APK preview Android v2 concluído no EAS em 20/11/2026, build `4793d335-5a5b-433f-9a9b-2dc79ec8a3c3`, [baixar APK](https://expo.dev/artifacts/eas/WMFLKQo1Y6j19_MJSvLSK1G2j0YgrCQrfaz36lC1VJ0.apk).
 - NF-e ainda depende de configurar CNPJ e provisionar o A1 diretamente no host; handshake, endpoint de homologação e chamada SEFAZ real não foram validados. Não há manifestação automática nem consulta agendada.
 - Migrations 0008–0011 ainda não foram aplicadas no Supabase hospedado e o novo app/serviço ainda não foi publicado ou compilado para Android.
 

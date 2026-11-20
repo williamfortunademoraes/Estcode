@@ -28,6 +28,7 @@
 | Detalhe/edição de produto separados e imagem privada | `/products/[id]`, `/products/[id]/edit`, Storage privado | Implementado; não publicado |
 | Consulta/importação de NF-e por CNPJ com certificado A1 | `services/nfe-api/`, `src/app/invoices/`, migrations `0010` e RPC de aplicação | Implementação inicial; exige certificado/host e teste real de mTLS |
 | Permissão para helpers usados em RLS | migration `0011_grant_rls_helpers.sql` | Corrigido e validado no PostgreSQL local; ainda não aplicado no remoto |
+| Validação Android v2 | build EAS `4793d335-5a5b-433f-9a9b-2dc79ec8a3c3` | APK preview concluído; disponível pelo EAS |
 
 O deploy remoto reproduzível está em `scripts/deploy-supabase.ps1`; ele não manipula nem grava a `service_role`.
 
