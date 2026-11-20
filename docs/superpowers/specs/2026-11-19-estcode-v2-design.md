@@ -43,7 +43,7 @@ Evoluir o ESTCODE para facilitar o trabalho diário com conta, catálogo e estoq
 ### Consulta automática de NF-e
 
 - Criar configuração administrativa da empresa destinatária (CNPJ e dados de integração) e rotina de consulta iniciada manualmente por administrador na primeira entrega.
-- Comunicar com o serviço oficial somente no backend. Certificado A1 e senha ficam como segredo do servidor, nunca em AsyncStorage, SQLite, código do app, tabela legível pelo cliente ou logs.
+- Comunicar com o serviço oficial por um backend Node separado, protegido por autenticação Supabase. Certificado A1 e senha ficam como segredo do servidor, nunca em AsyncStorage, SQLite, código do app, tabela legível pelo cliente ou logs.
 - Armazenar NSU e documentos com unicidade/idempotência; processar resumos, XMLs e eventos sem criar entradas em duplicidade.
 - Exibir lista de notas, emitente, data, valor, situação fiscal e itens disponíveis. Lidar com notas canceladas e documentos ainda resumidos.
 - Não emitir manifestação fiscal automaticamente na primeira versão. Informar quando a nota exigir manifestação para liberar o XML e encaminhar o usuário para o procedimento configurado.
@@ -55,7 +55,7 @@ Evoluir o ESTCODE para facilitar o trabalho diário com conta, catálogo e estoq
 
 - Adicionar migrations para configuração da empresa, documentos fiscais, linhas, checkpoints e referências de origem da movimentação; RLS para leitura autorizada e operações administrativas mediadas por função segura.
 - Certificado é segredo operacional de alto impacto. A decisão de produto é mantê-lo em gestão de secrets do backend ou cofre compatível; avaliar o mecanismo disponível no projeto Supabase antes da implementação. Não salvar certificado em coluna comum.
-- Integração direta exige adaptador fiscal no servidor compatível com SOAP, assinatura/certificado e XML. A Edge Function existente demonstra o padrão server-side, mas runtime/limites podem exigir serviço backend separado; validar tecnicamente em spike antes de assumir deploy.
+- A distribuição oficial exige mTLS. A documentação do Deno oferece suporte cliente a cert/key em `Deno.createHttpClient`, mas evidência recente do runtime Supabase mostra incompatibilidades com essa API/flags e não há prova local com o certificado. Para não depender de uma capacidade instável, a proposta técnica atual fixa um pequeno serviço Node dedicado, com `https.Agent`/PFX e segredos do host, sem credencial privilegiada do Supabase. O serviço valida JWT Supabase e perfil admin ativo antes de consultar.
 - O CNPJ e certificado da empresa ainda precisam ser cadastrados/configurados pelo administrador em ambiente seguro. Não solicitar nem colocar o arquivo ou senha no chat/repositório.
 
 ## Fluxo da nota
@@ -77,7 +77,7 @@ Evoluir o ESTCODE para facilitar o trabalho diário com conta, catálogo e estoq
 
 1. Ajustes visuais e de dados de perfil/produtos, inclusive preços na busca.
 2. Definição e persistência das novas preferências de estoque.
-3. Spike servidor: validar certificados, SOAP, assinatura, comunicação fiscal, limites do runtime e armazenamento seguro de segredo.
+3. Spike servidor: validar certificados, SOAP, comunicação fiscal, limites do runtime e armazenamento seguro de segredo. Usar backend Node independente para mTLS.
 4. Modelo de documentos, consulta incremental por NSU, idempotência e estados.
 5. Interface de revisão, vínculo de itens e lançamento transacional/auditável.
 6. Testes de permissões, segurança, duplicidade, erros fiscais e regressão; documentação e build Android.
@@ -99,4 +99,4 @@ Evoluir o ESTCODE para facilitar o trabalho diário com conta, catálogo e estoq
 - A NF-e deve ficar em revisão até um administrador confirmar cada documento; sugestão padrão adotada.
 - Mostrar custo unitário apenas ao administrador; operadores e consultores veem preço de venda. Sugestão padrão adotada.
 - As preferências adicionais de estoque devem ser definidas em conjunto; não criar opções sem significado operacional.
-- Não foi identificada uma forma segura de provisionar certificado diretamente em Edge Function. A fase de spike decide se a conexão fiscal fica no Supabase ou em serviço backend protegido separado.
+- Evidência do runtime não comprova mTLS seguro e estável em Supabase Edge; backend Node protegido separado é a proposta adotada, sujeito a prova de conexão no ambiente de homologação.

@@ -31,6 +31,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o ESTCODE acesse fotos para cadastrar imagens de produtos.",
+          "cameraPermission": "Permitir que o ESTCODE use a câmera para fotografar produtos.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Permitir que o ESTCODE use a câmera para ler códigos de barras.",

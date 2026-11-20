@@ -9,6 +9,7 @@ import {
   signIn,
   signOut,
   updatePassword,
+  updateProfileName,
 } from '@/src/features/auth/auth-service';
 import { supabase } from '@/src/lib/supabase';
 import type { Profile } from '@/src/types/domain';
@@ -25,13 +26,14 @@ interface AuthState {
   signOut: () => Promise<boolean>;
   requestPasswordReset: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
+  saveProfileName: (fullName: string) => Promise<boolean>;
   clearError: () => void;
 }
 
 let hasBootstrapped = false;
 let authSubscription: { unsubscribe: () => void } | null = null;
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   profile: null,
   status: 'idle',
@@ -105,6 +107,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       return true;
     } catch (error) {
       set({ status: 'error', error: getAuthErrorMessage(error) });
+      return false;
+    }
+  },
+  saveProfileName: async (fullName) => {
+    const profile = get().profile;
+    if (!profile) return false;
+    try {
+      const updatedProfile = await updateProfileName(profile.id, fullName);
+      set({ profile: updatedProfile, error: null });
+      return true;
+    } catch (error) {
+      set({ error: getAuthErrorMessage(error) });
       return false;
     }
   },

@@ -44,6 +44,26 @@ create role anon;
 create role authenticated;
 create role service_role;
 create schema auth;
+create schema storage;
+create table storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets(id),
+  name text not null
+);
+create or replace function storage.foldername(object_name text)
+returns text[]
+language sql
+immutable
+as $function$
+  select (string_to_array(object_name, '/'))[1:array_length(string_to_array(object_name, '/'), 1) - 1];
+$function$;
 create table auth.users (
   id uuid primary key,
   raw_user_meta_data jsonb not null default '{}'::jsonb
@@ -75,6 +95,23 @@ set role = 'admin'
 where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 insert into public.products (id, name, sku, unit, minimum_stock, target_stock)
 values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Produto de teste', 'TEST-001', 'un', 1, 10);
+insert into public.fiscal_company_settings (singleton, cnpj)
+values (true, '11222333000181');
+insert into public.incoming_fiscal_documents (
+  id, nsu, access_key, schema, document_type, issuer_name, total_amount,
+  fiscal_status, xml_path
+) values (
+  '22222222-2222-4222-8222-222222222222', '000000000000001',
+  '35261112345678000199550010000000011000000010', 'procNFe_v4.00.xsd', 'full',
+  'Fornecedor Teste', 25, 'ready_for_review',
+  '22222222-2222-4222-8222-222222222222.xml'
+);
+insert into public.incoming_fiscal_document_items (
+  id, document_id, line_number, supplier_code, description, unit, quantity, unit_price, product_id
+) values (
+  '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222',
+  1, 'TEST-001', 'Produto de teste', 'un', 2, 12.5, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+);
 '@
   Invoke-ValidationSql -Sql $fixtureSql
 
@@ -87,6 +124,7 @@ declare
   inventory_id uuid := '00000000-0000-0000-0000-000000000001';
   product_id uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   idempotency_key uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  fiscal_lease_id uuid := '12121212-1212-4212-8212-121212121212';
 begin
   if public.get_shared_inventory_id() <> inventory_id then
     raise exception 'shared inventory lookup failed';
@@ -123,6 +161,32 @@ begin
 
   if has_table_privilege('authenticated', 'public.stock_balances', 'UPDATE') then
     raise exception 'authenticated role can update stock_balances directly';
+  end if;
+
+  result := public.apply_incoming_fiscal_document('22222222-2222-4222-8222-222222222222');
+  if coalesce((result ->> 'already_applied')::boolean, true) then
+    raise exception 'fiscal invoice first application assertion failed';
+  end if;
+  result := public.apply_incoming_fiscal_document('22222222-2222-4222-8222-222222222222');
+  if coalesce((result ->> 'already_applied')::boolean, false) is not true then
+    raise exception 'fiscal invoice idempotency assertion failed';
+  end if;
+  if not public.is_valid_cnpj('11222333000181') or public.is_valid_cnpj('11222333000182') then
+    raise exception 'CNPJ check-digit validation failed';
+  end if;
+
+  if not public.is_active_user() or not public.has_role(array['admin']::public.user_role[]) then
+    raise exception 'RLS helper execution or role assertion failed';
+  end if;
+  if not public.acquire_fiscal_sync_lease(fiscal_lease_id) then
+    raise exception 'fiscal sync lease acquisition failed';
+  end if;
+  if public.acquire_fiscal_sync_lease('13131313-1313-4313-8313-131313131313') then
+    raise exception 'concurrent fiscal sync lease was not blocked';
+  end if;
+  perform public.release_fiscal_sync_lease(fiscal_lease_id);
+  if (select quantity from public.stock_balances where public.stock_balances.inventory_id = '00000000-0000-0000-0000-000000000001' and public.stock_balances.product_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb') <> 12 then
+    raise exception 'authenticated RLS balance read assertion failed';
   end if;
 
 end;

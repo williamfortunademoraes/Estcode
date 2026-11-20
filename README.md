@@ -19,6 +19,7 @@ Preencha no `.env` (ou use o `.env.local` já ignorado pelo Git):
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+EXPO_PUBLIC_NFE_API_URL=https://your-nfe-api.example.com
 ```
 
 Nunca coloque `service_role` no aplicativo.
@@ -130,8 +131,15 @@ Se houver PostgreSQL 16 instalado localmente, valide as migrations e as RPCs cr�
 - Histórico com filtros e atualização Realtime.
 - Scanner de códigos EAN-8/EAN-13 com tratamento de permissão, repetição e código desconhecido.
 - Dashboard, relatórios e consultoria determinística de reposição.
+- Configuração do estoque com mínimo global aplicado como padrão somente quando o mínimo do produto é zero.
+- Produtos com preço de venda, custo visível apenas para admins, detalhe separado da edição e foto privada.
+- Consulta de NF-e via serviço Node separado, com mTLS A1 no host, lista/revisão e aplicação transacional após associação dos itens.
 - Limite de operações pendentes preparado em Expo SQLite; operações não confirmadas não são exibidas como efetivadas.
 - Falhas transitórias de rede nas movimentações são salvas localmente com `idempotency_key` e exibidas como pendentes; erros de permissão/validação não entram na fila.
 
 O detalhamento por fase, riscos e pendências remotas está em [`docs/implementation-status.md`](docs/implementation-status.md).
 A matriz de requisitos e suas evidências está em [`docs/requirements-matrix.md`](docs/requirements-matrix.md).
+
+## Serviço fiscal de NF-e
+
+O backend fiscal é independente do app Expo. Configure os segredos diretamente no secret manager do host (`NFE_CERTIFICATE_PFX_BASE64`, `NFE_CERTIFICATE_PASSWORD`), junto de `SUPABASE_URL` e `SUPABASE_ANON_KEY`, e execute `npm run nfe-api`. Configure `EXPO_PUBLIC_NFE_API_URL` no build do app. Não armazene o certificado A1 ou sua senha no projeto, em tabelas Supabase ou no cliente. Os detalhes e limites ainda não validados estão em [`services/nfe-api/README.md`](services/nfe-api/README.md).

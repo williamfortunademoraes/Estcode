@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, HelperText, Surface, Switch, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, HelperText, Surface, Switch, Text, TextInput } from 'react-native-paper';
 
 import { AppScreen } from '@/src/components/AppScreen';
 import { canManageUsers } from '@/src/features/auth/permissions';
@@ -46,6 +46,7 @@ export default function InventorySettingsScreen() {
       setSettings(await updateInventorySettings(inventoryId, {
         allow_negative_balance: settings.allow_negative_balance,
         allow_operator_adjustments: settings.allow_operator_adjustments,
+        global_minimum_stock: settings.global_minimum_stock,
       }));
       setSuccess('Configurações salvas pelo servidor.');
       setError(null);
@@ -64,6 +65,11 @@ export default function InventorySettingsScreen() {
       {error ? <HelperText type="error" visible>{error}</HelperText> : null}
       {success ? <HelperText type="info" visible>{success}</HelperText> : null}
       {settings ? <Surface style={styles.card} elevation={1}>
+        <View style={styles.settingText}>
+          <Text variant="titleMedium">Mínimo global para alertas</Text>
+          <Text style={styles.muted}>Usado como padrão quando o mínimo individual do produto for zero. Um mínimo individual definido prevalece sobre este valor.</Text>
+          <TextInput label="Quantidade mínima padrão" value={String(settings.global_minimum_stock)} onChangeText={(text) => setSettings({ ...settings, global_minimum_stock: Number(text.replace(',', '.')) || 0 })} keyboardType="decimal-pad" />
+        </View>
         <View style={styles.settingRow}><View style={styles.settingText}><Text variant="titleMedium">Permitir saldo negativo</Text><Text style={styles.muted}>Saídas podem ultrapassar o saldo atual. Use somente com autorização administrativa.</Text></View><Switch value={settings.allow_negative_balance} onValueChange={(value) => setSettings({ ...settings, allow_negative_balance: value })} /></View>
         <View style={styles.settingRow}><View style={styles.settingText}><Text variant="titleMedium">Permitir ajustes por operadores</Text><Text style={styles.muted}>Operadores poderão registrar contagens e diferenças no estoque.</Text></View><Switch value={settings.allow_operator_adjustments} onValueChange={(value) => setSettings({ ...settings, allow_operator_adjustments: value })} /></View>
         <Button mode="contained" onPress={() => { void save(); }} loading={isSaving} disabled={isSaving} contentStyle={styles.buttonContent}>Salvar configurações</Button>

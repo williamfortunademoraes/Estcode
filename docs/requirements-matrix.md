@@ -20,6 +20,15 @@
 | Migrations aplicadas no Supabase remoto | `scripts/verify-supabase-remote.ps1` + MCP Supabase | Validado: 7 migrations aplicadas e 9 tabelas com RLS |
 | Build Android publicado | `eas.json` e jobs EAS | Projeto criado; APK preview enviado e aguardando fila |
 
+## Incrementos v2 em desenvolvimento
+
+| Requisito | Evidência | Estado |
+| --- | --- | --- |
+| Mínimo global de estoque | migration `0009_global_minimum_stock.sql`, `replenishment-rules.ts` | Implementado; PostgreSQL local validado |
+| Detalhe/edição de produto separados e imagem privada | `/products/[id]`, `/products/[id]/edit`, Storage privado | Implementado; não publicado |
+| Consulta/importação de NF-e por CNPJ com certificado A1 | `services/nfe-api/`, `src/app/invoices/`, migrations `0010` e RPC de aplicação | Implementação inicial; exige certificado/host e teste real de mTLS |
+| Permissão para helpers usados em RLS | migration `0011_grant_rls_helpers.sql` | Corrigido e validado no PostgreSQL local; ainda não aplicado no remoto |
+
 O deploy remoto reproduzível está em `scripts/deploy-supabase.ps1`; ele não manipula nem grava a `service_role`.
 
 ## Evidências da última validação

@@ -1,5 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
-import { getAuthErrorMessage, requestPasswordReset, signIn, signOut, updatePassword } from '@/src/features/auth/auth-service';
+import { getAuthErrorMessage, requestPasswordReset, signIn, signOut, updatePassword, updateProfileName } from '@/src/features/auth/auth-service';
 
 jest.mock('@/src/lib/supabase', () => ({
   supabase: {
@@ -63,6 +63,20 @@ describe('auth service', () => {
     await expect(requestPasswordReset('person@example.com')).resolves.toBeUndefined();
     await expect(updatePassword('secret123')).resolves.toBeUndefined();
     await expect(signOut()).resolves.toBeUndefined();
+  });
+
+  it('updates only the authenticated profile name', async () => {
+    const query = { update: jest.fn(), eq: jest.fn(), select: jest.fn(), single: jest.fn() };
+    query.update.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    query.select.mockReturnValue(query);
+    query.single.mockResolvedValue({ data: { ...profile, full_name: 'Nome atualizado' }, error: null });
+    client.from.mockReturnValue(query);
+
+    await expect(updateProfileName('user-1', '  Nome atualizado  ')).resolves.toMatchObject({ full_name: 'Nome atualizado' });
+    expect(client.from).toHaveBeenCalledWith('profiles');
+    expect(query.update).toHaveBeenCalledWith({ full_name: 'Nome atualizado' });
+    expect(query.eq).toHaveBeenCalledWith('id', 'user-1');
   });
 
   it('returns safe user-facing messages', () => {

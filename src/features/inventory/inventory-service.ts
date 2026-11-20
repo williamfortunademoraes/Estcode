@@ -116,7 +116,7 @@ export async function getInventorySettings(inventoryId: string): Promise<Invento
 
 export async function updateInventorySettings(
   inventoryId: string,
-  changes: Pick<InventorySettings, 'allow_negative_balance' | 'allow_operator_adjustments'>,
+  changes: Pick<InventorySettings, 'allow_negative_balance' | 'allow_operator_adjustments' | 'global_minimum_stock'>,
 ): Promise<InventorySettings> {
   const client = requireSupabase();
   const { data, error } = await client

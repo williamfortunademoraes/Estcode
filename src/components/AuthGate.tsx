@@ -18,7 +18,7 @@ export function AuthGate() {
   useEffect(() => {
     if (status !== 'ready' && status !== 'error') return;
     const inAuthGroup = segments[0] === '(auth)';
-    const isResetPassword = segments[1] === 'reset-password';
+    const isResetPassword = segments.join('/') === '(auth)/reset-password';
     const hasIdentity = Boolean(session && profile);
 
     if (!hasIdentity && !inAuthGroup) {

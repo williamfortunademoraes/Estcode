@@ -64,7 +64,7 @@ describe('inventory service RPC boundary', () => {
   });
 
   it('reads and updates administrative inventory settings', async () => {
-    const settings = { inventory_id: base.inventory_id, allow_negative_balance: false, allow_operator_adjustments: false, created_at: '', updated_at: '' };
+    const settings = { inventory_id: base.inventory_id, allow_negative_balance: false, allow_operator_adjustments: false, global_minimum_stock: 4, created_at: '', updated_at: '' };
     const query = { select: jest.fn(), update: jest.fn(), eq: jest.fn(), single: jest.fn() };
     query.select.mockReturnValue(query);
     query.update.mockReturnValue(query);
@@ -73,8 +73,8 @@ describe('inventory service RPC boundary', () => {
     client.from.mockReturnValue(query);
 
     await expect(getInventorySettings(base.inventory_id)).resolves.toEqual(settings);
-    await expect(updateInventorySettings(base.inventory_id, { allow_negative_balance: true, allow_operator_adjustments: true })).resolves.toEqual(settings);
-    expect(query.update).toHaveBeenCalledWith({ allow_negative_balance: true, allow_operator_adjustments: true });
+    await expect(updateInventorySettings(base.inventory_id, { allow_negative_balance: true, allow_operator_adjustments: true, global_minimum_stock: 4 })).resolves.toEqual(settings);
+    expect(query.update).toHaveBeenCalledWith({ allow_negative_balance: true, allow_operator_adjustments: true, global_minimum_stock: 4 });
   });
 
   it('classifies only transient network failures as retryable', () => {

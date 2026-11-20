@@ -1,11 +1,13 @@
 import { supabase } from '@/src/lib/supabase';
-import { createProduct, getProductByBarcode, listProducts } from '@/src/features/products/product-service';
+import { createProduct, getProductByBarcode, listProducts, saveProductImage } from '@/src/features/products/product-service';
 
 jest.mock('@/src/lib/supabase', () => ({
-  supabase: { from: jest.fn() },
+  supabase: { from: jest.fn(), storage: { from: jest.fn() } },
 }));
 
-const client = supabase as unknown as { from: jest.Mock };
+jest.mock('expo-file-system', () => ({ File: jest.fn(() => ({ arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer })) }));
+
+const client = supabase as unknown as { from: jest.Mock; storage: { from: jest.Mock } };
 const product = {
   id: 'product-1',
   name: 'Café',
@@ -19,6 +21,8 @@ const product = {
   target_stock: 10,
   cost_price: null,
   sale_price: null,
+  image_path: null,
+  image_url: null,
   active: true,
   created_at: '',
   updated_at: '',
@@ -78,5 +82,26 @@ describe('product service', () => {
       cost_price: null, sale_price: null, active: true,
     })).resolves.toEqual(product);
     expect(query.insert).toHaveBeenCalledWith(expect.objectContaining({ name: 'Café', sku: 'CAF-001' }));
+  });
+
+  it('uploads a supported image privately and stores only its object path', async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn();
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    update.mockReturnValue({ eq });
+    const oldPath = 'product-uuid/old';
+    const maybeSingle = jest.fn().mockResolvedValue({ data: { image_path: oldPath }, error: null });
+    const selectEq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq: selectEq });
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    client.storage.from.mockReturnValue({ upload, remove });
+    client.from.mockReturnValue({ update, select });
+
+    const path = await saveProductImage('product-uuid', 'file:///photo.jpg', 'image/jpeg');
+    expect(path).toMatch(/^product-uuid\/[a-z0-9-]+$/);
+    expect(client.storage.from).toHaveBeenCalledWith('product-images');
+    expect(upload).toHaveBeenCalledWith(path, expect.any(ArrayBuffer), expect.objectContaining({ contentType: 'image/jpeg', upsert: false }));
+    expect(update).toHaveBeenCalledWith({ image_path: path });
+    expect(remove).toHaveBeenCalledWith([oldPath]);
   });
 });

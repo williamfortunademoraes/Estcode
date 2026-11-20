@@ -12,6 +12,16 @@
 | 6 | Concluída | Dashboard, relatórios, indicadores e regras determinísticas de reposição |
 | 7 | Concluída; APK preview gerado | Testes, lint, TypeScript, export web, Expo Doctor, deploy Supabase e build Android EAS |
 
+## Versão 2.0 em desenvolvimento (`feature/estcode-v2`)
+
+- Perfil: e-mail da sessão, edição segura do nome e entrada para recuperação de senha.
+- Produtos: apresentação e edição em rotas separadas, preço de venda no catálogo, custo restrito ao admin, imagem em bucket privado com URL assinada.
+- Estoque: mínimo global persistido; só substitui o mínimo do produto quando o valor individual é zero.
+- NF-e: serviço Node separado, JWT e perfil admin validados, consulta por NSU com mTLS, persistência privada, conferência/mapeamento dos itens e RPC transacional para aplicar entrada.
+- Migrations `0008` a `0011` validadas em PostgreSQL 16 temporário; a RPC fiscal foi exercitada com CNPJ, aplicação, idempotência e leitura RLS.
+- NF-e ainda depende de configurar CNPJ e provisionar o A1 diretamente no host; handshake, endpoint de homologação e chamada SEFAZ real não foram validados. Não há manifestação automática nem consulta agendada.
+- Migrations 0008–0011 ainda não foram aplicadas no Supabase hospedado e o novo app/serviço ainda não foi publicado ou compilado para Android.
+
 ## Segurança aplicada
 
 - O cliente mobile não recebe `service_role`.

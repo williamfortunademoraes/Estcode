@@ -25,6 +25,10 @@ export function getAuthErrorMessage(error: unknown): string {
         return 'Seu perfil ainda não foi configurado. Procure um administrador.';
       case 'PROFILE_INACTIVE':
         return 'Este usuário está inativo. Procure um administrador.';
+      case 'PROFILE_NAME_REQUIRED':
+        return 'Informe seu nome completo.';
+      case 'PROFILE_NAME_TOO_LONG':
+        return 'O nome deve ter no máximo 160 caracteres.';
       default:
         break;
     }
@@ -62,6 +66,22 @@ export async function loadProfile(userId: string): Promise<Profile> {
     throw new Error('PROFILE_INACTIVE');
   }
   return profile;
+}
+
+export async function updateProfileName(userId: string, fullName: string): Promise<Profile> {
+  const client = requireSupabase();
+  const normalizedName = fullName.trim();
+  if (!normalizedName) throw new Error('PROFILE_NAME_REQUIRED');
+  if (normalizedName.length > 160) throw new Error('PROFILE_NAME_TOO_LONG');
+
+  const { data, error } = await client
+    .from('profiles')
+    .update({ full_name: normalizedName })
+    .eq('id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as Profile;
 }
 
 export async function bootstrapSession(): Promise<AuthenticatedIdentity | null> {

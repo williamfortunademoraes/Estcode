@@ -24,6 +24,8 @@ export interface Product {
   target_stock: number;
   cost_price: number | null;
   sale_price: number | null;
+  image_path: string | null;
+  image_url?: string | null;
   active: boolean;
   created_at: string;
   updated_at: string;
@@ -60,6 +62,7 @@ export interface InventorySettings {
   inventory_id: string;
   allow_negative_balance: boolean;
   allow_operator_adjustments: boolean;
+  global_minimum_stock: number;
   created_at: string;
   updated_at: string;
 }
